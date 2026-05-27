@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotelBook - Сервис бронирования</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #18bc9c;
+            --dark: #34495e;
+            --light: #ecf0f1;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f6fa;
+            color: var(--dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .logo-area h1 {
+            font-size: 2.2rem;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .logo-area p {
+            font-size: 0.95rem;
+            color: #bdc3c7;
+            font-style: italic;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            flex-grow: 1;
+            width: 100%;
+        }
+
+        h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        /* --- КАТАЛОГ И ФИЛЬТРЫ --- */
+        .search-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            align-items: flex-end;
+        }
+
+        .search-bar-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .search-bar-group label {
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .search-bar input, .search-bar select, .form-group input, .form-group select {
+            padding: 0.6rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            height: 40px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background-color: #149c82; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover { background-color: #c0392b; }
+        .btn-secondary { background-color: #7f8c8d; }
+        .btn-secondary:hover { background-color: #646f70; }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Обновленный контейнер для изображений */
+        .room-img-container {
+            height: 220px;
+            width: 100%;
+            overflow: hidden;
+            background-color: #eee;
+        }
+
+        .room-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Изображение аккуратно заполняет блок без деформации */
+            transition: transform 0.3s;
+        }
+
+        .room-card:hover .room-img-container img {
+            transform: scale(1.05); /* Легкий эффект зума при наведении */
+        }
+
+        .room-info {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .room-price {
+            font-size: 1.4rem;
+            color: var(--secondary);
+            font-weight: bold;
+            margin: 0.8rem 0;
+        }
+
+        /* --- ПОДВАЛ (FOOTER) --- */
+        footer {
+            background-color: var(--primary);
+            color: white;
+            padding: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .footer-contacts p {
+            margin: 0.3rem 0;
+        }
+
+        /* --- МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label { margin-bottom: 0.3rem; font-weight: 600; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <h1>HotelBook</h1>
+            <p>Уют и комфорт в один клик</p>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <h2>Поиск и бронирование номеров</h2>
+        
+        <div class="search-bar">
+            <div class="search-bar-group">
+                <label>Дата заезда</label>
+                <input type="date" id="search-checkin">
+            </div>
+            <div class="search-bar-group">
+                <label>Дата выезда</label>
+                <input type="date" id="search-checkout">
+            </div>
+            <div class="search-bar-group">
+                <label>Тип номера</label>
+                <select id="search-type">
+                    <option value="all">Все типы</option>
+                    <option value="Стандарт">Стандарт</option>
+                    <option value="Студия">Студия</option>
+                    <option value="Люкс">Люкс</option>
+                </select>
+            </div>
+            <button class="btn" onclick="filterRooms()">Найти</button>
+            <button class="btn btn-secondary" onclick="resetFilter()">Сбросить фильтр</button>
+        </div>
+
+        <div class="rooms-grid" id="rooms-container">
+            </div>
+
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div style="text-align: left;">
+                <h4>HotelBook Inc.</h4>
+                <p>© 2026 Все права защищены.</p>
+            </div>
+            <div class="footer-contacts">
+                <p>📞 Тел: +7 (800) 555-35-35</p>
+                <p>✉️ Email: support@hotelbook-example.com</p>
+                <p>📍 Адрес: г. Москва, ул. Гостеприимная, д. 10, офис 404</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal" id="booking-modal">
+        <div class="modal-content">
+            <h3 id="modal-room-title" style="margin-bottom: 1.5rem;">Бронирование номера</h3>
+            <form id="booking-form" onsubmit="handleBookingSubmit(event)">
+                <input type="hidden" id="modal-room-category">
+                
+                <div class="form-group">
+                    <label>Фамилия</label>
+                    <input type="text" id="book-lastname" required>
+                </div>
+                <div class="form-group">
+                    <label>Имя</label>
+                    <input type="text" id="book-firstname" required>
+                </div>
+                <div class="form-group">
+                    <label>Телефон</label>
+                    <input type="tel" id="book-phone" placeholder="+7 (999) 000-00-00" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="book-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Дата заезда</label>
+                    <input type="date" id="book-checkin" required>
+                </div>
+                <div class="form-group">
+                    <label>Дата выезда</label>
+                    <input type="date" id="book-checkout" required>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn" style="flex: 1;">Подтвердить бронь</button>
+                    <button type="button" class="btn btn-danger" style="flex: 1;" onclick="closeModal()">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // База данных номеров с URL-адресами полноценных изображений
+        const roomsData = [
+            { id: 1, category: 'Стандарт', price: 3000, features: 'Номер #101: 1 комната, Двуспальная кровать, ТВ, Wi-Fi, Собственный санузел', img: 'hotelstandard.jpg' },
+            { id: 2, category: 'Стандарт', price: 3500, features: 'Номер #102: Повышенный комфорт, Улучшенный вид из окна, Письменный стол, Wi-Fi', img: 'hotelstandard2.jpg' },
+            { id: 3, category: 'Студия', price: 5500, features: 'Номер #201: Просторная комната с кухонной зоной, Кондиционер, Стиральная машина', img: 'hotelstudio.jpg' },
+            { id: 4, category: 'Студия', price: 6000, features: 'Номер #202: Панорамные окна, Современная мини-кухня, Кофемашина, Зона отдыха', img: 'hotelstudio2.jpg' },
+            { id: 5, category: 'Люкс', price: 12000, features: 'Номер #301: 2 комнаты, Панорамный вид, Джакузи, Мини-бар, Включен завтрак', img: 'hotellux.jpg' },
+            { id: 6, category: 'Люкс', price: 15000, features: 'Номер #302: Президентский люкс, Собственная терраса, Сауна, Персональный трансфер', img: 'hotellux2.jpeg' }
+        ];
+
+        // Функция перемешивания массива (Алгоритм Фишера — Йетса)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Рендеринг каталога номеров
+        function renderCatalog(rooms) {
+            const container = document.getElementById('rooms-container');
+            container.innerHTML = '';
+            
+            if (rooms.length === 0) {
+                container.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #7f8c8d; padding: 3rem; font-size: 1.1rem;">По вашему запросу ничего не найдено. Попробуйте изменить параметры или сбросить фильтр.</p>`;
+                return;
+            }
+
+            rooms.forEach(room => {
+                container.innerHTML += `
+                    <div class="room-card">
+                        <div class="room-img-container">
+                            <img src="${room.img}" alt="${room.category}" loading="lazy">
+                        </div>
+                        <div class="room-info">
+                            <h3 style="color: var(--primary); margin-bottom: 0.5rem;">${room.category}</h3>
+                            <p style="color: #666; font-size: 0.9rem; flex-grow: 1; line-height: 1.4;">${room.features}</p>
+                            <div class="room-price">${room.price} ₽ <span style="font-size: 0.9rem; font-weight: normal; color: #777;">/ сутки</span></div>
+                            <button class="btn" style="width: 100%; margin-top: 1rem;" onclick="openModal('${room.category}')">Забронировать</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Фильтрация номеров по типу
+        function filterRooms() {
+            const type = document.getElementById('search-type').value;
+            // При фильтрации берем текущую (уже перемешанную) базу данных
+            const filtered = type === 'all' ? roomsData : roomsData.filter(r => r.category === type);
+            renderCatalog(filtered);
+        }
+
+        // Сброс фильтра с повторным перемешиванием карточек
+        function resetFilter() {
+            document.getElementById('search-type').value = 'all';
+            document.getElementById('search-checkin').value = '';
+            document.getElementById('search-checkout').value = '';
+            shuffleArray(roomsData); // Перемешиваем заново при сбросе
+            renderCatalog(roomsData);
+        }
+
+        // Логика Модального Окна бронирования
+        function openModal(category) {
+            document.getElementById('modal-room-title').innerText = `Бронирование номера: ${category}`;
+            document.getElementById('modal-room-category').value = category;
+            document.getElementById('booking-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('booking-modal').style.display = 'none';
+            document.getElementById('booking-form').reset();
+        }
+
+        function handleBookingSubmit(e) {
+            e.preventDefault();
+            const clientName = document.getElementById('book-firstname').value;
+            const randomId = Math.floor(1000 + Math.random() * 9000); 
+            
+            alert(`Спасибо, ${clientName}! Ваша заявка №${randomId} на бронирование успешно создана. Наш администратор свяжется с вами по указанному телефону для подтверждения.`);
+            closeModal();
+        }
+
+        // ИНИЦИАЛИЗАЦИЯ: Перемешиваем базу данных при первой загрузке страницы
+        shuffleArray(roomsData);
+        renderCatalog(roomsData);
+    </script>
+</body>
+</html>

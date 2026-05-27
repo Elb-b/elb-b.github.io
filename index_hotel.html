@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotelBook - Сервис бронирования</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #18bc9c;
+            --dark: #34495e;
+            --light: #ecf0f1;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f6fa;
+            color: var(--dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-area h2 {
+            margin-bottom: 2px;
+        }
+
+        .logo-area p {
+            font-size: 0.85rem;
+            color: #bdc3c7;
+            font-style: italic;
+        }
+
+        nav button {
+            background: none;
+            border: 2px solid transparent;
+            color: white;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            border-radius: 4px;
+        }
+
+        nav button.active, nav button:hover {
+            border-color: var(--secondary);
+            background-color: var(--secondary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            flex-grow: 1;
+            width: 100%;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        h1, h2, h3 {
+            margin-bottom: 1rem;
+        }
+
+        /* --- КАТАЛОГ И ФИЛЬТРЫ --- */
+        .search-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            align-items: flex-end;
+        }
+
+        .search-bar-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .search-bar-group label {
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .search-bar input, .search-bar select, .form-group input, .form-group select {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            height: 38px;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-secondary { background-color: #7f8c8d; }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .room-img {
+            height: 200px;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #777;
+            font-weight: bold;
+        }
+
+        .room-info {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .room-price {
+            font-size: 1.4rem;
+            color: var(--secondary);
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        /* --- ПОДВАЛ (FOOTER) --- */
+        footer {
+            background-color: var(--primary);
+            color: white;
+            padding: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .footer-contacts p {
+            margin: 0.3rem 0;
+        }
+
+        /* --- МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label { margin-bottom: 0.3rem; font-weight: 600; }
+
+        /* --- ТАБЛИЦЫ АДМИНКИ --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th { background-color: var(--primary); color: white; }
+
+        .status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .status-pending { background: #ffeaa7; color: #d63031; }
+        .status-approved { background: #dff9fb; color: var(--success); }
+        .status-rejected { background: #ffcbcf; color: var(--danger); }
+
+        /* --- СТИЛИ ДЛЯ ДИАГРАММЫ ПРЕЦЕДЕНТОВ (Use Case) --- */
+        .diagram-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            min-height: 500px;
+        }
+
+        .actor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+            width: 150px;
+        }
+
+        .actor-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .system-boundary {
+            border: 3px solid var(--dark);
+            border-radius: 8px;
+            padding: 2rem;
+            flex-grow: 1;
+            margin: 0 2rem;
+            background: #fafafa;
+            position: relative;
+        }
+
+        .system-boundary::before {
+            content: "Система бронирования HotelBook";
+            position: absolute;
+            top: -12px; left: 20px;
+            background: white;
+            padding: 0 10px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .use-case-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .use-case {
+            background: white;
+            border: 2px solid var(--secondary);
+            border-radius: 50px;
+            padding: 1rem 2rem;
+            text-align: center;
+            min-width: 250px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-weight: 500;
+            position: relative;
+        }
+        
+        .use-case::before, .use-case::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 40px;
+            height: 2px;
+            background: #ccc;
+        }
+        .use-case::before { left: -42px; }
+        .use-case::after { right: -42px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <h2>HotelBook</h2>
+            <p>Уют и комфорт в один клик</p>
+        </div>
+        <nav>
+            <button class="active" onclick="switchPage('catalog-page')">Каталог номеров</button>
+            <button onclick="switchPage('admin-page')">Панель администратора</button>
+            <button onclick="switchPage('diagram-page')">Диаграмма Use Case</button>
+        </nav>
+    </header>
+
+    <div class="container">
+
+        <div id="catalog-page" class="page active">
+            <h2>Поиск и бронирование номеров</h2>
+            <div class="search-bar">
+                <div class="search-bar-group">
+                    <label>Дата заезда</label>
+                    <input type="date" id="search-checkin">
+                </div>
+                <div class="search-bar-group">
+                    <label>Дата выезда</label>
+                    <input type="date" id="search-checkout">
+                </div>
+                <div class="search-bar-group">
+                    <label>Тип номера</label>
+                    <select id="search-type">
+                        <option value="all">Все типы</option>
+                        <option value="Стандарт">Стандарт</option>
+                        <option value="Студия">Студия</option>
+                        <option value="Люкс">Люкс</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="filterRooms()">Найти</button>
+                <button class="btn btn-secondary" onclick="resetFilter()">Сбросить фильтр</button>
+            </div>
+
+            <div class="rooms-grid" id="rooms-container">
+                </div>
+        </div>
+
+
+        <div id="admin-page" class="page">
+            <h2>Панель администратора</h2>
+            
+            <h3>Управление заявками на бронирование</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Клиент</th>
+                            <th>Контакты</th>
+                            <th>Номер</th>
+                            <th>Даты</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-bookings-table">
+                        </tbody>
+                </table>
+            </div>
+
+            <h3>Управление каталогом номеров</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Категория</th>
+                            <th>Цена (за сутки)</th>
+                            <th>Характеристики</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-rooms-table">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <div id="diagram-page" class="page">
+            <h2>Диаграмма прецедентов (Вариантов использования)</h2>
+            <p style="margin-bottom: 1.5rem; color: #555;">Интерактивная UML Use Case диаграмма, отражающая требования технического задания.</p>
+            
+            <div class="diagram-container">
+                <div class="actor">
+                    <div class="actor-icon">👤</div>
+                    <span>Пользователь<br>(Клиент)</span>
+                </div>
+
+                <div class="system-boundary">
+                    <div class="use-case-list">
+                        <div class="use-case">Просматривать контент сайта</div>
+                        <div class="use-case">Искать номер в каталоге</div>
+                        <div class="use-case" style="border-color: #e67e22; font-weight: bold;">Забронировать номер</div>
+                        <div class="use-case">Просматривать заявки</div>
+                        <div class="use-case">Управлять каталогом номеров</div>
+                        <div class="use-case">Изменять статус заявки<br><small>(Одобрена / Отклонена)</small></div>
+                    </div>
+                </div>
+
+                <div class="actor">
+                    <div class="actor-icon" style="background: var(--secondary)">⚙️</div>
+                    <span>Администратор</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div style="text-align: left;">
+                <h4>HotelBook Inc.</h4>
+                <p>© 2026 Все права защищены.</p>
+            </div>
+            <div class="footer-contacts">
+                <p>📞 Тел: +7 (800) 555-35-35</p>
+                <p>✉️ Email: support@hotelbook-example.com</p>
+                <p>📍 Адрес: г. Москва, ул. Гостеприимная, д. 10, офис 404</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal" id="booking-modal">
+        <div class="modal-content">
+            <h3 id="modal-room-title">Бронирование номера</h3>
+            <form id="booking-form" onsubmit="handleBookingSubmit(event)">
+                <input type="hidden" id="modal-room-category">
+                <div class="form-group">
+                    <label>Фамилия</label>
+                    <input type="text" id="book-lastname" required>
+                </div>
+                <div class="form-group">
+                    <label>Имя</label>
+                    <input type="text" id="book-firstname" required>
+                </div>
+                <div class="form-group">
+                    <label>Телефон</label>
+                    <input type="tel" id="book-phone" placeholder="+7 (999) 000-00-00" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="book-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Дата заезда</label>
+                    <input type="date" id="book-checkin" required>
+                </div>
+                <div class="form-group">
+                    <label>Дата выезда</label>
+                    <input type="date" id="book-checkout" required>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn">Подтвердить бронь</button>
+                    <button type="button" class="btn btn-danger" onclick="closeModal()">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Исходные данные базы данных (Добавлено по одной карточке на каждую категорию)
+        const roomsData = [
+            { id: 1, category: 'Стандарт', price: 3000, features: 'Номер #101: 1 комната, Двуспальная кровать, ТВ, Wi-Fi, Санузел', img: '🛏️' },
+            { id: 2, category: 'Стандарт', price: 3500, features: 'Номер #102: Повышенный комфорт, Улучшенный вид из окна, Письменный стол, Wi-Fi', img: '🛏️' },
+            { id: 3, category: 'Студия', price: 5500, features: 'Номер #201: Просторная комната с кухонной зоной, Кондиционер, Стиральная машина', img: '🛋️' },
+            { id: 4, category: 'Студия', price: 6000, features: 'Номер #202: Панорамные окна, Современная мини-кухня, Кофемашина, Зона отдыха', img: '🛋️' },
+            { id: 5, category: 'Люкс', price: 12000, features: 'Номер #301: 2 комнаты, Панорамный вид, Джакузи, Мини-бар, Включен завтрак', img: '👑' },
+            { id: 6, category: 'Люкс', price: 15000, features: 'Номер #302: Президентский люкс, Собственная терраса, Сауна, Персональный трансфер', img: '👑' }
+        ];
+
+        let bookingsData = [
+            { id: 101, lastname: 'Иванов', firstname: 'Иван', phone: '+79991112233', email: 'ivan@mail.ru', roomCategory: 'Люкс', checkin: '2026-06-01', checkout: '2026-06-05', status: 'Ожидает' },
+            { id: 102, lastname: 'Петрова', firstname: 'Анна', phone: '+79994445566', email: 'anna@petrova.ru', roomCategory: 'Стандарт', checkin: '2026-06-10', checkout: '2026-06-15', status: 'Одобрена' }
+        ];
+
+        // Переключение между вкладками/страницами
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(pageId).classList.add('active');
+            event.target.classList.add('active');
+
+            if(pageId === 'admin-page') { renderAdminPanel(); }
+            if(pageId === 'catalog-page') { renderCatalog(roomsData); }
+        }
+
+        // Рендеринг каталога номеров для пользователя
+        function renderCatalog(rooms) {
+            const container = document.getElementById('rooms-container');
+            container.innerHTML = '';
+            
+            if(rooms.length === 0) {
+                container.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #7f8c8d; padding: 2rem;">По вашему запросу ничего не найдено. Попробуйте сбросить фильтр.</p>`;
+                return;
+            }
+
+            rooms.forEach(room => {
+                container.innerHTML += `
+                    <div class="room-card">
+                        <div class="room-img" style="font-size: 4rem;">${room.img}</div>
+                        <div class="room-info">
+                            <h3>${room.category}</h3>
+                            <p style="color: #666; font-size: 0.9rem; flex-grow: 1;">${room.features}</p>
+                            <div class="room-price">${room.price} ₽ / сут.</div>
+                            <button class="btn" style="width: 100%; margin-top: 1rem;" onclick="openModal('${room.category}')">Забронировать</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Фильтрация номеров в каталоге
+        function filterRooms() {
+            const type = document.getElementById('search-type').value;
+            const filtered = type === 'all' ? roomsData : roomsData.filter(r => r.category === type);
+            renderCatalog(filtered);
+        }
+
+        // Сброс фильтра
+        function resetFilter() {
+            document.getElementById('search-type').value = 'all';
+            document.getElementById('search-checkin').value = '';
+            document.getElementById('search-checkout').value = '';
+            renderCatalog(roomsData);
+        }
+
+        // Логика Модального Окна бронирования
+        function openModal(category) {
+            document.getElementById('modal-room-title').innerText = `Бронирование номера: ${category}`;
+            document.getElementById('modal-room-category').value = category;
+            document.getElementById('booking-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('booking-modal').style.display = 'none';
+            document.getElementById('booking-form').reset();
+        }
+
+        function handleBookingSubmit(e) {
+            e.preventDefault();
+            const newBooking = {
+                id: Date.now().toString().slice(-4),
+                lastname: document.getElementById('book-lastname').value,
+                firstname: document.getElementById('book-firstname').value,
+                phone: document.getElementById('book-phone').value,
+                email: document.getElementById('book-email').value,
+                roomCategory: document.getElementById('modal-room-category').value,
+                checkin: document.getElementById('book-checkin').value,
+                checkout: document.getElementById('book-checkout').value,
+                status: 'Ожидает'
+            };
+            bookingsData.push(newBooking);
+            alert(`Спасибо, ${newBooking.firstname}! Ваша заявка №${newBooking.id} успешно отправлена. Ожидайте звонка администратора.`);
+            closeModal();
+        }
+
+        // Рендеринг Админ-панели (Заявки + Каталог)
+        function renderAdminPanel() {
+            // Таблица заявок
+            const bTable = document.getElementById('admin-bookings-table');
+            bTable.innerHTML = '';
+            bookingsData.forEach(b => {
+                let statusClass = 'status-pending';
+                if(b.status === 'Одобрена') statusClass = 'status-approved';
+                if(b.status === 'Отклонена') statusClass = 'status-rejected';
+
+                bTable.innerHTML += `
+                    <tr>
+                        <td><b>#${b.id}</b></td>
+                        <td>${b.lastname} ${b.firstname}</td>
+                        <td>${b.phone}<br><small>${b.email}</small></td>
+                        <td><span class="status" style="background:#eee; color:#333;">${b.roomCategory}</span></td>
+                        <td>${b.checkin} / ${b.checkout}</td>
+                        <td><span class="status ${statusClass}">${b.status}</span></td>
+                        <td>
+                            <button class="btn" style="padding: 0.3rem 0.6rem; background-color: var(--success); height: auto;" onclick="changeStatus(${b.id}, 'Одобрена')">✓</button>
+                            <button class="btn btn-danger" style="padding: 0.3rem 0.6rem; height: auto;" onclick="changeStatus(${b.id}, 'Отклонена')">✕</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Таблица каталога номеров
+            const rTable = document.getElementById('admin-rooms-table');
+            rTable.innerHTML = '';
+            roomsData.forEach(r => {
+                rTable.innerHTML += `
+                    <tr>
+                        <td><b>${r.category}</b></td>
+                        <td><span style="color: var(--secondary); font-weight: bold;">${r.price} ₽</span></td>
+                        <td><small>${r.features}</small></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Смена статуса администратором
+        function changeStatus(id, newStatus) {
+            const booking = bookingsData.find(b => b.id == id);
+            if(booking) {
+                booking.status = newStatus;
+                renderAdminPanel();
+            }
+        }
+
+        // Первичная инициализация каталога при загрузке страницы
+        renderCatalog(roomsData);
+    </script>
+</body>
+</html>
